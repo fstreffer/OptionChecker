@@ -1,5 +1,7 @@
 from ib_insync import *
 
+CONTRACTTYPE_OPTION = 'Option'
+
 def restructurePositions(accounts, positions):
     for position in positions:
         if position.account in accounts.keys():
@@ -10,10 +12,10 @@ def restructurePositions(accounts, positions):
         else:
             accounts[position.account] = {type(position.contract).__name__ : [position]}
             
-def getAllOpenTrades():    
-    ib.client.reqAllOpenOrders()  # issue reqAllOpenOrders() directly to IB API, this is a non blocking call
-    ib.reqOpenOrders()    # blocking until openOrderEnd messages (may receive two, ib_insync seems not to care
-    return ib.openTrades()  # the orders received from issuing reqAllOpenOrders() are correctly captured
+def getAllOpenTrades(ib_local):    
+    ib_local.client.reqAllOpenOrders()  # issue reqAllOpenOrders() directly to IB API, this is a non blocking call
+    ib_local.reqOpenOrders()    # blocking until openOrderEnd messages (may receive two, ib_insync seems not to care
+    return ib_local.openTrades()  # the orders received from issuing reqAllOpenOrders() are correctly captured
 
 
 def printAccounts(accounts):
@@ -26,40 +28,3 @@ def printAccounts(accounts):
 def printTrades(trades):
     for order in trades:
         print(order)
-        
-def checkTrades(accounts, trades):
-    for account in accounts.keys():
-        print(f'Account: {account} :')
-        for option in accounts[account]['Option']:
-            tradeFound=False
-            hasError=False
-            for trade in trades:
-                if trade.contract == option.contract and trade.order.account == option.account:
-                    tradeFound=True
-                    if trade.order.action != 'BUY':
-                        print('trade is not BUY')
-                        hasError=True
-                    if trade.order.totalQuantity != -option.position:
-                        print('wrong quantity')
-                        hasError=True
-            if not tradeFound:           
-                print('no order found')
-                hasError=True
-            if hasError:
-                print(option)    
-    
-ib = IB()
-ib.connect(host='127.0.0.1', port=7497, clientId=10)
-
-ib_accounts = {}   
-ib_positions = ib.positions()
-
-restructurePositions(ib_accounts, ib_positions)
-
-ib_trades = getAllOpenTrades()
-checkTrades(ib_accounts, ib_trades)
-
-#printAccounts(ib_accounts)
-#printTrades(ib_trades)
-        
-ib.disconnect()
