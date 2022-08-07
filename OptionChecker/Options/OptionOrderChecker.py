@@ -7,6 +7,10 @@ IBKR_CONNECTION = 'ibkr connection'
 CONNECTION_HOST = 'host'
 CONNECTION_PORT = 'port'
 CONNECTION_CLIENTID = 'clientID'
+GTC ='GTC'
+LMT = 'LMT'
+BUY = 'BUY'
+
       
 def checkTrades(accounts, trades):
     output = []
@@ -17,8 +21,14 @@ def checkTrades(accounts, trades):
             hasError=False
             for trade in trades:
                 if trade.contract == option.contract and trade.order.account == option.account:
-                    tradeFound=True
-                    if trade.order.action != 'BUY':
+                    tradeFound=True 
+                    if trade.order.tif != GTC:
+                        output.append('trade is not GTC')
+                        hasError=True
+                    if trade.order.orderType != LMT:
+                        output.append('trade is not LMT')
+                        hasError=True
+                    if trade.order.action != BUY:
                         output.append('trade is not BUY')
                         hasError=True
                     if trade.order.totalQuantity != -option.position:
@@ -45,7 +55,7 @@ Options.restructurePositions(ib_accounts, ib_positions)
 ib_trades = Options.getAllOpenTrades(ib)
 print(*checkTrades(ib_accounts, ib_trades), sep = "\n") 
 
-#Options.printAccounts(ib_accounts)
-#Options.printTrades(ib_trades)
+Options.printAccounts(ib_accounts)
+Options.printTrades(ib_trades)
         
 ib.disconnect()
